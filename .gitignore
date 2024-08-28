@@ -1,0 +1,4 @@
+# 忽略dist目录
+dist/
+# 忽略node_modules目录
+node_modules/

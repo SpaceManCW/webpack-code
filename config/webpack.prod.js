@@ -4,7 +4,26 @@ const path = require("path"); // nodejs核心模块，专门用来处理路径�
 const ESLintPlugin = require('eslint-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 
+function getStyleLoader(pre) {
+  return [
+    MiniCssExtractPlugin.loader, // 提取css成单独文件
+    'css-loader', // 将css文件编译成commonjs的模块到js中
+    // 对象的形式定义loader 可以为其添加options配置项
+    {
+      loader: 'postcss-loader', 
+      options: {
+        postcssOptions: {
+          plugins: [
+            'postcss-preset-env', // 能解决大多数样式兼容性问题
+          ]
+        }
+      }
+    },
+    pre
+  ].filter(Boolean)
+}
 module.exports = {
   // 入口
   entry: "./src/main.js", // 相对路径
@@ -25,43 +44,12 @@ module.exports = {
       // loader的配置
       {
         test: /\.css$/, // 只检测.css文件
-        use: [ // 执行顺序从右到左（从下到上）
-          // 'style-loader', // 将js中的css通过创建style标签添加html文件中生效 容易闪屏
-          MiniCssExtractPlugin.loader, // 提取css成单独文件
-          'css-loader', // 将css文件编译成commonjs的模块到js中
-          // 对象的形式定义loader 可以为其添加options配置项
-          {
-            loader: 'postcss-loader', 
-            options: {
-              postcssOptions: {
-                plugins: [
-                  'postcss-preset-env', // 能解决大多数样式兼容性问题
-                ]
-              }
-            }
-          }
-        ],
+        use: getStyleLoader(),
       },
       {
         test: /\.less$/,
         // loader: 'xxx' 只能使用一个loader
-        use: [ 
-          // 使用多个loader
-          // 'style-loader', 
-          MiniCssExtractPlugin.loader,
-          'css-loader', 
-          {
-            loader: 'postcss-loader', 
-            options: {
-              postcssOptions: {
-                plugins: [
-                  'postcss-preset-env', // 能解决大多数样式兼容性问题
-                ]
-              }
-            }
-          },
-          'less-loader', // 将less文件编译成css文件
-        ], 
+        use: getStyleLoader('less-loader'),
       },
       {
         test: /\.(png|jpe?g|gif|webp|svg)$/,
@@ -111,7 +99,8 @@ module.exports = {
     }),
     new MiniCssExtractPlugin({
       filename: 'static/css/main.css'
-    })
+    }),
+    new CssMinimizerPlugin()
   ],
   // 模式
   mode: "production"
